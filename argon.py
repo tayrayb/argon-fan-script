@@ -1,5 +1,6 @@
 from smbus import SMBus
 from time import sleep
+import os
 
 bus = SMBus(1)
 i2c_address = 0x1a
@@ -11,19 +12,22 @@ def read_temp():
     return int(cpu_temp)
     # print(temp)
 
-def update_fan():
+def fan_percentage():
     temp = read_temp() / 1000
-    temp1 = 40
-    temp2 = 70
-    temp_range = temp2 - temp1
-    temp_percentage = int((temp - temp1) / (temp_range) * 100)
+    temp_min_max = (40, 70)
+    temp_range = temp_min_max[1] - temp_min_max[0]
+    temp_percentage = int((temp - temp_min_max[0]) / (temp_range) * 100)
     if temp_percentage < 0:
-        temp_percentage = 0    
-    amt_hex = int(hex(temp_percentage), 16)
-    bus.write_byte(i2c_address, amt_hex)
+        temp_percentage = 0
     return temp_percentage
+
+def update_fan():
+    amt_hex = int(hex(fan_percentage()), 16)
+    bus.write_byte(i2c_address, amt_hex)
 
 while True:
     print('CPU Temp:', int((read_temp() / 1000)),'c')
-    print('Fan Speed:',update_fan(),'%')
+    print('Fan Speed:',fan_percentage(),'%')
+    update_fan()
     sleep(10)
+    os.system('clear')
